@@ -212,10 +212,11 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
       capturedCount: Object.keys(capturedVideos).length,
       totalScenes: scenes.length,
       capturedVideos: Object.keys(capturedVideos).reduce((acc, key) => {
-        acc[key] = true; // Blob을 직접 저장할 수 없으므로 촬영 완료 여부만 저장
+        const sceneId = parseInt(key); // string을 number로 변환
+        acc[sceneId] = true;
         return acc;
       }, {} as {[key: number]: boolean}),
-      matchResults, // 매칭 결과도 저장
+      matchResults,
     };
     
     savedRecipes.push(newRecipe);
