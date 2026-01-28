@@ -8,8 +8,8 @@ export default function Home() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <Card className="text-center">
         <div className="mb-12">
-          <div className="inline-block w-16 h-16 bg-gradient-to-br from-blue-400 via-yellow-300 to-red-500 rounded-full mb-4 flex items-center justify-center">
-            <span className="text-3xl">🦜</span>
+          <div className="inline-block mb-4">
+            <img src="/parrot-logo.svg" alt="ParrotKit" className="w-24 h-24" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">ParrotKit</h1>
           <p className="text-gray-600 text-sm">Viral Recipe for UCC Creators</p>

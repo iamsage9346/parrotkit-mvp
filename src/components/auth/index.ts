@@ -6,5 +6,6 @@ export { URLInputForm } from './URLInputForm';
 export { SourceOptionsForm } from './SourceOptionsForm';
 export { PricingCard } from './PricingCard';
 export { DashboardLayout } from './DashboardLayout';
-export { MyRecipes, Projects, Templates, AIAssistant, Settings } from './DashboardContent';
+export { Home, MyRecipes, Projects, Templates, AIAssistant, Settings } from './DashboardContent';
+export { Recipes } from './RecipesTab';
 export { TopNav } from '../common/TopNav';

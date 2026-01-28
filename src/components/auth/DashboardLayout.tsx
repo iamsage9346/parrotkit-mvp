@@ -15,6 +15,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const tabs: { id: DashboardTab; label: string; icon: string }[] = [
+    { id: 'home', label: 'Home', icon: '🏠' },
     { id: 'recipes', label: 'My Recipes', icon: '📋' },
     { id: 'projects', label: 'Project', icon: '📁' },
     { id: 'templates', label: 'Template', icon: '🎨' },
@@ -24,6 +25,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
 
   const handleTabClick = (tabId: DashboardTab) => {
     router.push(`/dashboard?tab=${tabId}`);
+  };
+
+  const handleLogout = () => {
+    // localStorage 정리
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // 로그인 페이지로 이동
+    router.push('/signin');
   };
 
   return (
@@ -36,7 +46,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
         >
           ☰
         </button>
-        <h1 className="text-xl font-bold text-gray-900">Parrot Kit</h1>
+        <div className="flex items-center gap-2">
+          <img src="/parrot-logo.svg" alt="Parrot Kit" className="w-6 h-6" />
+          <h1 className="text-xl font-bold text-gray-900">Parrot Kit</h1>
+        </div>
         <div className="w-6" />
       </div>
 
@@ -47,7 +60,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
         }`}
       >
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Parrot Kit</h2>
+          <div className="flex items-center gap-2 mb-8">
+            <img src="/parrot-logo.svg" alt="Parrot Kit" className="w-8 h-8" />
+            <h2 className="text-2xl font-bold text-gray-900">Parrot Kit</h2>
+          </div>
 
           <nav className="space-y-2 mb-8">
             {tabs.map(tab => (
@@ -76,7 +92,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
             View Pricing
           </Link>
 
-          <button className="w-full px-4 py-3 text-center text-red-600 font-semibold hover:bg-red-50 rounded-lg transition-colors duration-200">
+          <button 
+            onClick={handleLogout}
+            className="w-full px-4 py-3 text-center text-red-600 font-semibold hover:bg-red-50 rounded-lg transition-colors duration-200"
+          >
             Log out
           </button>
         </div>

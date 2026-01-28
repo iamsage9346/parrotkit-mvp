@@ -52,19 +52,42 @@ export const SignUpForm: React.FC = () => {
     }
 
     try {
-      // TODO: API 호출 추가 (DB 연결 후)
-      console.log('Sign up data:', formData);
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // const data = await response.json();
-      router.push('/onboarding');
-      //   // 로그인 페이지로 리다이렉트
-      // }
-    } catch (err) {
-      setError('회원가입에 실패했습니다. 다시 시도해주세요.');
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '회원가입에 실패했습니다.');
+      }
+
+      // 회원가입 성공 - 자동 로그인
+      const signinResponse = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      const signinData = await signinResponse.json();
+      
+      if (signinResponse.ok) {
+        // 토큰 저장
+        localStorage.setItem('token', signinData.token);
+        localStorage.setItem('user', JSON.stringify(signinData.user));
+        router.push('/interests');
+      }
+    } catch (err: any) {
+      setError(err.message || '회원가입에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }

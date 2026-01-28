@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card } from '@/components/common';
 import { InterestCategory, INTEREST_CATEGORIES } from '@/types/auth';
@@ -21,12 +21,27 @@ export const InterestsForm: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // 로그인 체크
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      router.push('/signin');
+    }
+  }, [router]);
+
   const toggleInterest = (index: number) => {
-    setInterests(prev => {
-      const updated = [...prev];
-      updated[index].selected = !updated[index].selected;
-      return updated;
-    });
+    console.log('Toggle interest clicked:', index);
+    console.log('Before update:', interests[index]);
+    
+    const updated = [...interests];
+    updated[index] = {
+      ...updated[index],
+      selected: !updated[index].selected
+    };
+    
+    console.log('After update:', updated[index]);
+    setInterests(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -44,18 +59,33 @@ export const InterestsForm: React.FC = () => {
     }
 
     try {
-      // TODO: API 호출 추가 (관심사 저장 후 영상 제출 페이지로 이동)
-      console.log('Selected interests:', selectedInterests);
-      // const response = await fetch('/api/user/interests', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ interests: selectedInterests }),
-      // });
-      // if (response.ok) {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        router.push('/signin');
+        return;
+      }
+
+      const response = await fetch('/api/interests', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ interests: selectedInterests }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || '관심사 저장에 실패했습니다.');
+      }
+
+      // 성공 - 다음 페이지로 이동
+      alert('관심사가 저장되었습니다!');
       router.push('/submit-video');
-      // }
-    } catch (err) {
-      alert('관심사 저장에 실패했습니다. 다시 시도해주세요.');
+    } catch (err: any) {
+      alert(err.message || '관심사 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -79,11 +109,12 @@ export const InterestsForm: React.FC = () => {
               key={interest.category}
               type="button"
               onClick={() => toggleInterest(index)}
-              className={`py-2 px-4 rounded-full font-medium text-sm transition-all duration-200 border-2 ${
-                interest.selected
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
-              }`}
+              style={{
+                backgroundColor: interest.selected ? '#3B82F6' : '#FFFFFF',
+                color: interest.selected ? '#FFFFFF' : '#374151',
+                borderColor: interest.selected ? '#3B82F6' : '#D1D5DB',
+              }}
+              className={`py-2 px-4 rounded-full font-medium text-sm transition-all duration-200 border-2`}
             >
               {interest.category}
             </button>

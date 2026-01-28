@@ -143,7 +143,7 @@ export const PLATFORMS: VideoPlatform[] = [
   'Facebook',
 ];
 
-export type DashboardTab = 'recipes' | 'projects' | 'templates' | 'ai-assistant' | 'settings';
+export type DashboardTab = 'home' | 'recipes' | 'projects' | 'templates' | 'ai-assistant' | 'settings';
 
 export interface PricingPlan {
   name: string;
@@ -160,13 +160,13 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: 'Free Plan',
     price: 0,
     period: '/month',
-    description: 'Free for basic users',
+    description: 'Turn any Shorts/TikTok link into a shoot-ready recipe in minutes.',
     features: [
-      'Reference Link Analyzer (limited)',
-      'Basic Shot Recipe Template (Hook + Cuts + Captions)',
-      'Basic Export to MP4',
-      'Export (basic)',
-      'Community Access',
+      '✅ Reference Link Analyzer (limited)',
+      '📷 Basic Shot Recipe Template (Hook → Cuts → Captions)',
+      '💾 Save up to 10 recipes',
+      '📄 Export (basic)',
+      '⭕ Community Access',
     ],
     buttonText: 'Start for Free',
   },
@@ -174,16 +174,15 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: 'Pro Plan',
     price: 24,
     period: '/month',
-    description: 'Billed yearly ($288/year)',
+    description: 'Create viral-ready content faster with advanced breakdowns + reusable templates.',
     features: [
-      'Create and edit scripts with advanced breakdowns',
-      'Unlimited Recipe Generation (Beats per min)',
-      'Shot-by-Shot Breakdown (cuts, captions, B-roll cues)',
-      'Hook Variations + Script/VO Prompts',
-      'Format Library (trending structures & templates)',
-      'Recipe Vault (search, tags, version history)',
-      'Export to NotionClickDocs + Downloadable templates',
-      'Priority Speed + Early Features',
+      '✅ Unlimited Recipe Generation (fair use)',
+      '📷 Shot-by-Shot Breakdown (cuts, captions, B-roll cues)',
+      '❌ Hook Variations + Script/VO Prompts',
+      '🚀 Format Library (trending structures & templates)',
+      '💾 Recipe Vault (search, tags, version history)',
+      '📄 Export to Notion/Docs + Downloadable templates',
+      '🚀 Priority Speed + Early Features',
     ],
     buttonText: 'Get Access Now',
     popular: true,

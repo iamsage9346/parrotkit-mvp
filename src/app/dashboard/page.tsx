@@ -4,7 +4,8 @@ import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   DashboardLayout,
-  MyRecipes,
+  Home,
+  Recipes,
   Projects,
   Templates,
   AIAssistant,
@@ -15,12 +16,14 @@ import { DashboardTab } from '@/types/auth';
 function DashboardContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab') as DashboardTab | null;
-  const activeTab = (tabParam || 'recipes') as DashboardTab;
+  const activeTab = (tabParam || 'home') as DashboardTab;
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'home':
+        return <Home />;
       case 'recipes':
-        return <MyRecipes />;
+        return <Recipes />;
       case 'projects':
         return <Projects />;
       case 'templates':
@@ -30,7 +33,7 @@ function DashboardContent() {
       case 'settings':
         return <Settings />;
       default:
-        return <MyRecipes />;
+        return <Home />;
     }
   };
 

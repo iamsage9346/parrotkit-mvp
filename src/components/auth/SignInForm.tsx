@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button, Input, Card } from '@/components/common';
 import { SignInFormData } from '@/types/auth';
 
 export const SignInForm: React.FC = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState<SignInFormData>({
     email: '',
     password: '',
@@ -36,19 +38,33 @@ export const SignInForm: React.FC = () => {
     }
 
     try {
-      // TODO: API 호출 추가 (DB 연결 후)
-      console.log('Sign in data:', formData);
-      // const response = await fetch('/api/auth/signin', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // const data = await response.json();
-      // if (data.success) {
-      //   // 대시보드로 리다이렉트
-      // }
-    } catch (err) {
-      setError('로그인에 실패했습니다. 다시 시도해주세요.');
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.email, // email 필드에 username/email 모두 가능
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '로그인에 실패했습니다.');
+      }
+
+      // 토큰과 사용자 정보 저장
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // interests가 없으면 interests 페이지로, 있으면 대시보드로
+      if (!data.user.interests || data.user.interests.length === 0) {
+        router.push('/interests');
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
