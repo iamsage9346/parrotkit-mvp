@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import ytdl from 'ytdl-core';
 
-// 간단한 버전 - YouTube 다운로드는 클라이언트에서 URL만 받음
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
@@ -12,18 +12,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 처리 시간 시뮬레이션 (실제로는 FFmpeg 분석 시간)
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // YouTube URL 유효성 검사
+    if (!ytdl.validateURL(url)) {
+      return NextResponse.json(
+        { error: 'Invalid YouTube URL' },
+        { status: 400 }
+      );
+    }
 
-    // YouTube URL에서 비디오 ID 추출
-    const videoId = extractVideoId(url);
+    // 비디오 정보 가져오기
+    const info = await ytdl.getInfo(url);
+    const videoDetails = info.videoDetails;
     
-    // Mock scene detection - 40초 영상을 4초씩 10개로 자르기
-    const sceneDuration = 4; // 4초씩
-    const totalDuration = 40; // 전체 40초
-    const sceneCount = Math.floor(totalDuration / sceneDuration);
+    // 비디오 ID 추출
+    const videoId = videoDetails.videoId;
     
-    // 영상 흐름에 맞는 씬 이름
+    // 실제 비디오 길이 (초 단위)
+    const totalDuration = parseInt(videoDetails.lengthSeconds);
+    
+    // 4초씩 자르기
+    const sceneDuration = 4;
+    const sceneCount = Math.ceil(totalDuration / sceneDuration);
+    
+    // 영상 흐름에 맞는 씬 이름 (최대 10개까지만 정의)
     const sceneNames = [
       'Hook',
       'Introduction', 
@@ -54,7 +65,7 @@ export async function POST(request: NextRequest) {
     
     for (let i = 0; i < sceneCount; i++) {
       const startTime = i * sceneDuration;
-      const endTime = (i + 1) * sceneDuration;
+      const endTime = Math.min((i + 1) * sceneDuration, totalDuration); // 마지막 씬은 실제 길이까지만
       
       scenes.push({
         id: i + 1,
@@ -63,7 +74,7 @@ export async function POST(request: NextRequest) {
         endTime: formatTime(endTime),
         thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
         description: sceneDescriptions[i] || `Scene ${i + 1}`,
-        progress: 0, // 모두 0으로 (촬영 대기 상태)
+        progress: 0,
       });
     }
 
@@ -79,9 +90,9 @@ export async function POST(request: NextRequest) {
       url,
       scenes,
       metadata: {
-        title: 'YouTube Shorts Video',
-        duration: '00:08',
-        platform: 'YouTube Shorts',
+        title: videoDetails.title || 'YouTube Video',
+        duration: formatTime(totalDuration),
+        platform: url.includes('shorts') ? 'YouTube Shorts' : 'YouTube',
       },
     });
   } catch (error: any) {
@@ -91,20 +102,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function extractVideoId(url: string): string {
-  // YouTube Shorts URL에서 비디오 ID 추출
-  const patterns = [
-    /shorts\/([a-zA-Z0-9_-]+)/,
-    /watch\?v=([a-zA-Z0-9_-]+)/,
-    /youtu\.be\/([a-zA-Z0-9_-]+)/,
-  ];
-  
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  
-  return 'awPG4F9yyOc'; // fallback
 }
