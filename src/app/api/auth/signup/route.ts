@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { mvpUsers } from '@/lib/schema';
 import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import jwt from 'jsonwebtoken';
+import { eq, or } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, username, password } = body;
 
-    // Validation
     if (!email || !username || !password) {
       return NextResponse.json(
         { error: 'All fields are required' },
@@ -21,25 +21,17 @@ export async function POST(request: NextRequest) {
     const existingUser = await db
       .select()
       .from(mvpUsers)
-      .where(eq(mvpUsers.email, email))
+      .where(
+        or(
+          eq(mvpUsers.email, email),
+          eq(mvpUsers.username, username)
+        )
+      )
       .limit(1);
 
     if (existingUser.length > 0) {
       return NextResponse.json(
-        { error: 'Email already registered' },
-        { status: 409 }
-      );
-    }
-
-    const existingUsername = await db
-      .select()
-      .from(mvpUsers)
-      .where(eq(mvpUsers.username, username))
-      .limit(1);
-
-    if (existingUsername.length > 0) {
-      return NextResponse.json(
-        { error: 'Username already taken' },
+        { error: 'User already exists' },
         { status: 409 }
       );
     }
@@ -47,20 +39,38 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user
+    // Create user
     const newUser = await db
       .insert(mvpUsers)
       .values({
         email,
         username,
         password: hashedPassword,
+        interests: [],
       })
-      .returning({ id: mvpUsers.id, email: mvpUsers.email, username: mvpUsers.username });
+      .returning();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: newUser[0].id,
+        email: newUser[0].email,
+        username: newUser[0].username,
+      },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '7d' }
+    );
 
     return NextResponse.json(
       {
-        message: 'User created successfully',
-        user: newUser[0],
+        message: 'Signup successful',
+        token,
+        user: {
+          id: newUser[0].id,
+          email: newUser[0].email,
+          username: newUser[0].username,
+          interests: newUser[0].interests,
+        },
       },
       { status: 201 }
     );
