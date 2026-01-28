@@ -16,7 +16,8 @@
     "drizzle-orm": "^0.29.3",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
