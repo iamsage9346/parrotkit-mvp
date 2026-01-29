@@ -191,7 +191,7 @@ export const Home: React.FC = () => {
                 type="text"
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
-                placeholder="e.g. 뷰티, 요리, 운동, IT 리뷰..."
+                placeholder="e.g. Beauty, Cooking, Fitness, Tech Review..."
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                 disabled={loading}
               />
@@ -202,7 +202,7 @@ export const Home: React.FC = () => {
                 type="text"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                placeholder="e.g. 팔로워 늘리기, 제품 홍보, 정보 전달..."
+                placeholder="e.g. Grow followers, Promote product, Share tips..."
                 className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                 disabled={loading}
               />
@@ -214,7 +214,7 @@ export const Home: React.FC = () => {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. 최근 유행하는 다이어트 방법을 소개하는 숏폼 영상을 만들고 싶어요. 재미있고 친근한 톤으로 시청자가 바로 따라할 수 있게..."
+              placeholder="e.g. I want to create a short-form video introducing trending diet tips. Fun and friendly tone, easy for viewers to follow along..."
               rows={3}
               className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
               disabled={loading}
