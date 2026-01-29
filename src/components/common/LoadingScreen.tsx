@@ -14,16 +14,16 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
       <div className="mb-8">
         {/* Parrot Kit Logo */}
         <div className="flex items-center justify-center mb-6">
-          <div className="w-24 h-24 bg-gradient-to-br from-red-500 via-yellow-500 to-blue-500 rounded-2xl animate-pulse" />
+          <img src="/parrot-logo.png" alt="Parrot Kit" className="w-24 h-24 animate-bounce" />
         </div>
-        
+
         {/* Loading Spinner */}
         <div className="relative w-32 h-32 mx-auto">
           <div className="absolute inset-0 border-8 border-gray-200 rounded-full" />
           <div className="absolute inset-0 border-8 border-blue-500 rounded-full border-t-transparent animate-spin" />
           {/* Inner circle */}
           <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center">
-            <div className="text-4xl">🎬</div>
+            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-12 h-12" />
           </div>
         </div>
         

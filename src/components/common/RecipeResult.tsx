@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { CameraShooting } from './CameraShooting';
 import { RecipeVideoPlayer } from './RecipeVideoPlayer';
 
@@ -38,6 +38,109 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [isExported, setIsExported] = useState(false);
   const [capturedScenes, setCapturedScenes] = useState<{[key: number]: boolean}>(initialCapturedVideos);
+  const [sceneScripts, setSceneScripts] = useState<{[key: number]: string[]}>({});
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'assistant'; content: string}[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const [sheetHeight, setSheetHeight] = useState(50);
+  const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  const getScriptForScene = (sceneId: number, description: string): string[] => {
+    if (sceneScripts[sceneId]) return sceneScripts[sceneId];
+    return [
+      description,
+      'Drop the phone from head to slightly under the chest',
+      'Stop when your face is in the middle of the frame',
+    ];
+  };
+
+  const parseScriptLines = (text: string): string[] | null => {
+    const lines = text.split('\n');
+    const numbered: string[] = [];
+    for (const line of lines) {
+      const match = line.match(/^\s*(\d+)\.\s+(.+)/);
+      if (match) {
+        numbered.push(match[2].trim());
+      }
+    }
+    return numbered.length >= 2 ? numbered : null;
+  };
+
+  const applyScript = (messageContent: string) => {
+    if (!selectedScene) return;
+    const lines = parseScriptLines(messageContent);
+    if (lines) {
+      setSceneScripts(prev => ({ ...prev, [selectedScene.id]: lines }));
+    }
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatMessage.trim() || chatLoading) return;
+    const userMsg = chatMessage.trim();
+    setChatMessage('');
+    const newHistory = [...chatHistory, { role: 'user' as const, content: userMsg }];
+    setChatHistory(newHistory);
+    setChatLoading(true);
+
+    setTimeout(() => chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }), 50);
+
+    const currentScript = selectedScene ? getScriptForScene(selectedScene.id, selectedScene.description) : [];
+    const payload = {
+      messages: newHistory,
+      scenes: scenes.map(s => ({ id: s.id, title: s.title, startTime: s.startTime, endTime: s.endTime, description: s.description })),
+      currentScene: selectedScene ? {
+        id: selectedScene.id,
+        title: selectedScene.title,
+        description: selectedScene.description,
+        script: currentScript,
+      } : null,
+    };
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.message) {
+        setChatHistory(prev => [...prev, { role: 'assistant', content: data.message }]);
+      } else {
+        setChatHistory(prev => [...prev, { role: 'assistant', content: 'Error: ' + (data.error || 'Failed to get response') }]);
+      }
+    } catch {
+      setChatHistory(prev => [...prev, { role: 'assistant', content: 'Network error. Please try again.' }]);
+    } finally {
+      setChatLoading(false);
+      setTimeout(() => chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }), 50);
+    }
+  };
+
+  const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    dragRef.current = { startY: clientY, startHeight: sheetHeight };
+  }, [sheetHeight]);
+
+  const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (!dragRef.current) return;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = dragRef.current.startY - clientY;
+    const deltaPercent = (deltaY / window.innerHeight) * 100;
+    const newHeight = Math.min(90, Math.max(20, dragRef.current.startHeight + deltaPercent));
+    setSheetHeight(newHeight);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (!dragRef.current) return;
+    // Snap to close if dragged below 15%
+    if (sheetHeight < 15) {
+      setChatOpen(false);
+      setSheetHeight(50);
+    }
+    dragRef.current = null;
+  }, [sheetHeight]);
 
   const handleSceneClick = (scene: RecipeScene) => {
     setSelectedScene(scene);
@@ -229,25 +332,29 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
   // 선택된 씨에서 디테일 화면
   if (selectedScene) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="h-screen flex flex-col bg-black overflow-hidden">
         {/* Header */}
-        <div className="bg-black border-b border-gray-800 sticky top-0 z-10">
-          <div className="flex items-center justify-between p-4 text-white">
+        <div className="bg-black border-b border-gray-800 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 text-white">
             <button
               onClick={handleCameraBack}
               className="flex items-center gap-2 font-semibold text-blue-400"
             >
               ← Back
             </button>
+            <div className="flex items-center gap-2">
+              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
+              <span className="text-sm font-medium">#{selectedScene.id}: {selectedScene.title}</span>
+            </div>
             <div className="text-sm text-gray-400">slow mode</div>
           </div>
         </div>
 
         {/* Tab Bar */}
-        <div className="flex items-center justify-center gap-4 py-4 bg-black">
+        <div className="flex items-center justify-center gap-4 py-2 bg-black flex-shrink-0">
           <button
             onClick={() => setActiveTab('recipe')}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
+            className={`px-6 py-1.5 rounded-full font-medium transition-all text-sm ${
               activeTab === 'recipe'
                 ? 'bg-white text-black'
                 : 'bg-gray-800 text-gray-400'
@@ -257,7 +364,7 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('shooting')}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
+            className={`px-6 py-1.5 rounded-full font-medium transition-all text-sm ${
               activeTab === 'shooting'
                 ? 'bg-white text-black'
                 : 'bg-gray-800 text-gray-400'
@@ -267,36 +374,143 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="relative h-[calc(100vh-140px)]">
+        {/* Content - fills remaining space */}
+        <div className="flex-1 relative overflow-hidden">
           {activeTab === 'recipe' ? (
             <RecipeVideoPlayer
               videoUrl={videoUrl}
               scene={selectedScene}
+              scriptLines={getScriptForScene(selectedScene.id, selectedScene.description)}
               onSwitchToShooting={() => setActiveTab('shooting')}
             />
           ) : (
             <CameraShooting
               sceneId={selectedScene.id}
               sceneTitle={selectedScene.title}
-              instructions={[
-                'Drop the phone from head to slightly under the chest',
-                'Stop when your face is in the middle of the frame',
-              ]}
+              instructions={getScriptForScene(selectedScene.id, selectedScene.description)}
               onCapture={handleVideoCapture}
               onBack={handleCameraBack}
               embedded={true}
             />
           )}
         </div>
+
+        {/* Floating Chatbot Button */}
+        {!chatOpen && (
+          <button
+            onClick={() => setChatOpen(true)}
+            className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-all transform hover:scale-110 flex items-center justify-center z-50"
+          >
+            <img src="/parrot-logo.png" alt="Chat" className="w-8 h-8" />
+          </button>
+        )}
+
+        {/* Chatbot Bottom Sheet */}
+        <div
+          className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ease-out ${
+            chatOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}
+          style={{ height: `${sheetHeight}vh` }}
+        >
+          {chatOpen && (
+            <div
+              className="fixed inset-0 bg-black/30 -z-10"
+              onClick={() => { setChatOpen(false); setSheetHeight(50); }}
+            />
+          )}
+          <div className="h-full bg-white rounded-t-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div
+              className="flex-shrink-0 cursor-grab active:cursor-grabbing select-none"
+              onMouseDown={handleDragStart}
+              onMouseMove={handleDragMove}
+              onMouseUp={handleDragEnd}
+              onMouseLeave={handleDragEnd}
+              onTouchStart={handleDragStart}
+              onTouchMove={handleDragMove}
+              onTouchEnd={handleDragEnd}
+            >
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1.5 bg-gray-300 rounded-full" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <img src="/parrot-logo.png" alt="Parrot Kit" className="w-7 h-7" />
+                <span className="font-bold text-gray-900 text-lg">Script Assistant</span>
+              </div>
+              <button
+                onClick={() => { setChatOpen(false); setSheetHeight(50); }}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-sm max-w-[85%]">
+                <p className="text-sm text-gray-700">
+                  Hi! I&apos;m editing the script for <strong>#{selectedScene.id}: {selectedScene.title}</strong>. Ask me to rewrite, shorten, or change the tone!
+                </p>
+              </div>
+              {chatHistory.map((msg, i) => (
+                <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`p-3 rounded-2xl max-w-[85%] ${
+                    msg.role === 'user'
+                      ? 'bg-blue-500 text-white rounded-br-sm'
+                      : 'bg-gray-100 text-gray-700 rounded-tl-sm'
+                  }`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+                  {msg.role === 'assistant' && parseScriptLines(msg.content) && (
+                    <button
+                      onClick={() => applyScript(msg.content)}
+                      className="mt-1.5 px-3 py-1 bg-green-500 text-white rounded-full text-xs font-semibold hover:bg-green-600 transition-colors"
+                    >
+                      Apply to Script
+                    </button>
+                  )}
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-sm">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-gray-100 p-4 flex gap-2 flex-shrink-0">
+              <input
+                type="text"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
+                placeholder="Ask about scripts..."
+                disabled={chatLoading}
+                className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all disabled:opacity-50"
+              />
+              <button
+                onClick={sendChatMessage}
+                disabled={chatLoading || !chatMessage.trim()}
+                className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="bg-white border-b z-10 shadow-sm flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center gap-2 text-blue-500 font-semibold hover:text-blue-600 transition-colors"
@@ -304,131 +518,210 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
             <span className="text-xl">←</span> Back
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-500 via-yellow-500 to-blue-500 rounded-xl" />
-            <h1 className="text-xl font-bold">Parrot Kit</h1>
+            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
+            <h1 className="text-lg font-bold">Parrot Kit</h1>
           </div>
-          <div className="w-20" />
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            {Object.keys(capturedVideos).length > 0 && (
+              <span>{Object.keys(capturedVideos).length}/{scenes.length} captured</span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Recipe Content */}
-      <div className="max-w-4xl mx-auto p-4 md:p-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">Recipe</h2>
-
-        {/* Scenes List */}
-        <div className="space-y-4">
-          {scenes.map((scene) => {
-            const isCaptured = capturedScenes[scene.id]; // 촬영 완료 여부
-            
-            return (
-              <div
-                key={scene.id}
-                className={`bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all ${
-                  isCaptured
-                    ? 'border-4 border-green-500'
-                    : 'border border-gray-200 hover:border-blue-300'
-                }`}
+      {/* Recipe Content - fits in one viewport */}
+      <div className="flex-1 overflow-hidden px-3 pb-2 pt-2 md:p-4">
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
+          <div className="flex items-center justify-between mb-2 flex-shrink-0">
+            <h2 className="text-lg font-bold text-gray-900">Recipe</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportVideos}
+                disabled={isExporting || Object.keys(capturedVideos).length === 0}
+                className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-              <div className="flex gap-4 p-4">
-                {/* Thumbnail */}
-                <div className="relative w-24 h-32 flex-shrink-0 rounded-xl overflow-hidden">
-                  <img
-                    src={scene.thumbnail}
-                    alt={scene.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* 촬영 완료 배지 */}
-                  {isCaptured && (
-                    <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-                      <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xl">
-                        ✓
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {isExporting ? 'Exporting...' : `Download (${Object.keys(capturedVideos).length})`}
+              </button>
+              {isExported && (
+                <button
+                  onClick={handleSaveAndGoToDashboard}
+                  className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition-all"
+                >
+                  Save & Dashboard
+                </button>
+              )}
+            </div>
+          </div>
 
-                {/* Scene Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-lg text-gray-900">
-                      #{scene.id}: {scene.title}
-                    </h3>
+          {/* Scenes Grid - compact, fits in one screen */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 flex-1 auto-rows-fr">
+            {scenes.map((scene) => {
+              const isCaptured = capturedScenes[scene.id];
+
+              return (
+                <div
+                  key={scene.id}
+                  onClick={() => handleSceneClick(scene)}
+                  className={`bg-white rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col ${
+                    isCaptured
+                      ? 'ring-2 ring-green-500'
+                      : 'border border-gray-200 hover:border-blue-300'
+                  }`}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative flex-1 min-h-0 overflow-hidden">
+                    <img
+                      src={scene.thumbnail}
+                      alt={scene.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {isCaptured && (
+                      <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                        <div className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                          ✓
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1 py-0.5 rounded">
+                      {scene.startTime}
+                    </div>
                   </div>
 
-                  <p className="text-sm text-gray-600 mb-2">
-                    {scene.startTime} ~ {scene.endTime}
-                  </p>
-
-                  <p className="text-sm text-gray-700 mb-3">
-                    {scene.description}
-                  </p>
-
-                  {/* 버튼 */}
-                  <div className="flex gap-2">
+                  {/* Scene Info - minimal */}
+                  <div className="px-2 py-1.5 flex items-center justify-between gap-1 flex-shrink-0">
+                    <h3 className="font-semibold text-[11px] text-gray-900 truncate">
+                      #{scene.id} {scene.title}
+                    </h3>
                     {isCaptured ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('이 씩을 다시 촬영하시겠습니까?')) {
-                            handleSceneClick(scene);
-                          }
-                        }}
-                        className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
-                      >
-                        ✏️ Edit
-                      </button>
+                      <span className="text-[10px] text-green-600 font-medium flex-shrink-0">Done</span>
                     ) : (
-                      <button
-                        onClick={() => handleSceneClick(scene)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors"
-                      >
-                        🎥 Shoot
-                      </button>
+                      <span className="text-[10px] text-blue-500 font-medium flex-shrink-0">Shoot</span>
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-            );
-          })}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button 
-            onClick={handleExportVideos}
-            disabled={isExporting || Object.keys(capturedVideos).length === 0}
-            className="py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isExporting ? '⏳ Exporting...' : `📥 Download Videos (${Object.keys(capturedVideos).length})`}
-          </button>
-          <button 
-            onClick={handleEmailVideos}
-            disabled={isExporting || Object.keys(capturedVideos).length === 0}
-            className="py-4 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            📧 Email Videos
-          </button>
-        </div>
-
-        {/* Progress Info */}
-        {Object.keys(capturedVideos).length > 0 && (
-          <div className="mt-4 text-center text-gray-600">
-            ✅ {Object.keys(capturedVideos).length} / {scenes.length} scenes captured
+              );
+            })}
           </div>
+        </div>
+      </div>
+
+      {/* Floating Chatbot Button */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-all transform hover:scale-110 flex items-center justify-center z-50"
+        >
+          <img src="/parrot-logo.png" alt="Chat" className="w-8 h-8" />
+        </button>
+      )}
+
+      {/* Chatbot Bottom Sheet */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ease-out ${
+          chatOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ height: `${sheetHeight}vh` }}
+      >
+        {/* Backdrop */}
+        {chatOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 -z-10"
+            onClick={() => { setChatOpen(false); setSheetHeight(50); }}
+          />
         )}
 
-        {/* Next Button - Export 후에만 표시 */}
-        {isExported && (
-          <div className="mt-6">
+        <div className="h-full bg-white rounded-t-3xl shadow-2xl flex flex-col overflow-hidden">
+          {/* Drag Handle */}
+          <div
+            className="flex-shrink-0 cursor-grab active:cursor-grabbing select-none"
+            onMouseDown={handleDragStart}
+            onMouseMove={handleDragMove}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={handleDragEnd}
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+          >
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1.5 bg-gray-300 rounded-full" />
+            </div>
+          </div>
+
+          {/* Chat Header */}
+          <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-7 h-7" />
+              <span className="font-bold text-gray-900 text-lg">Script Assistant</span>
+            </div>
             <button
-              onClick={handleSaveAndGoToDashboard}
-              className="w-full py-5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl font-bold text-xl shadow-2xl hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105"
+              onClick={() => { setChatOpen(false); setSheetHeight(50); }}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              ✅ Save Recipe & Go to Dashboard →
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             </button>
           </div>
-        )}
+
+          {/* Chat Messages - scrollable */}
+          <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Welcome message */}
+            <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-sm max-w-[85%]">
+              <p className="text-sm text-gray-700">
+                Hi! I&apos;m your Script Assistant. I can help you write and refine scripts for each scene. Try:
+              </p>
+              <ul className="text-xs text-gray-600 mt-2 space-y-1">
+                <li>&bull; &quot;Write a script for Scene #1 Hook&quot;</li>
+                <li>&bull; &quot;Make the intro more engaging&quot;</li>
+                <li>&bull; &quot;Suggest a funny voiceover for all scenes&quot;</li>
+              </ul>
+            </div>
+
+            {/* Chat history */}
+            {chatHistory.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`p-3 rounded-2xl max-w-[85%] ${
+                  msg.role === 'user'
+                    ? 'bg-blue-500 text-white rounded-br-sm'
+                    : 'bg-gray-100 text-gray-700 rounded-tl-sm'
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Loading indicator */}
+            {chatLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-sm">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Chat Input */}
+          <div className="border-t border-gray-100 p-4 flex gap-2 flex-shrink-0">
+            <input
+              type="text"
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
+              placeholder="Ask about scripts..."
+              disabled={chatLoading}
+              className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all disabled:opacity-50"
+            />
+            <button
+              onClick={sendChatMessage}
+              disabled={chatLoading || !chatMessage.trim()}
+              className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

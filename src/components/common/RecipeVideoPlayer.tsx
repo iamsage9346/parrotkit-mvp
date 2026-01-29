@@ -16,7 +16,10 @@ interface RecipeVideoPlayerProps {
     title: string;
     startTime: string;
     endTime: string;
+    thumbnail?: string;
+    description?: string;
   };
+  scriptLines?: string[];
   onSwitchToShooting: () => void;
 }
 
@@ -31,7 +34,7 @@ function extractVideoId(url: string): string {
     /watch\?v=([a-zA-Z0-9_-]+)/,
     /youtu\.be\/([a-zA-Z0-9_-]+)/,
   ];
-  
+
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) return match[1];
@@ -42,12 +45,14 @@ function extractVideoId(url: string): string {
 export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
   videoUrl,
   scene,
+  scriptLines,
   onSwitchToShooting,
 }) => {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [playerError, setPlayerError] = useState(false);
   const videoId = extractVideoId(videoUrl);
   const startSeconds = timeToSeconds(scene.startTime);
   const endSeconds = timeToSeconds(scene.endTime);
@@ -59,16 +64,16 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
     let progressInterval: NodeJS.Timeout | null = null;
     let mounted = true;
 
+    setPlayerError(false);
+
     const initPlayer = () => {
       if (!mounted) return;
       if (!window.YT || !window.YT.Player) {
-        console.log('YouTube API not ready yet');
         return;
       }
 
       const container = document.getElementById('youtube-player');
       if (!container) {
-        console.log('Container not found, retrying...');
         setTimeout(initPlayer, 100);
         return;
       }
@@ -78,13 +83,13 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
           videoId: videoId,
           playerVars: {
             autoplay: 1,
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
+            controls: 1,
+            playsinline: 1,
             modestbranding: 1,
             rel: 0,
-            showinfo: 0,
             start: startSeconds,
+            end: endSeconds,
+            origin: window.location.origin,
           },
           events: {
             onReady: (event: any) => {
@@ -92,14 +97,13 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
               event.target.mute();
               event.target.seekTo(startSeconds);
               event.target.playVideo();
-              
-              // 프로그레스 트래킹 시작
+
               progressInterval = setInterval(() => {
                 if (!mounted || !player || !player.getCurrentTime) return;
                 try {
                   const current = player.getCurrentTime();
                   const elapsed = current - startSeconds;
-                  
+
                   if (elapsed >= 0 && elapsed <= duration) {
                     setCurrentTime(elapsed);
                     setProgress((elapsed / duration) * 100);
@@ -112,7 +116,6 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
             onStateChange: (event: any) => {
               if (!mounted) return;
               if (event.data === window.YT.PlayerState.PLAYING) {
-                // 루프 체크 시작
                 if (checkInterval) clearInterval(checkInterval);
                 checkInterval = setInterval(() => {
                   if (!mounted || !player || !player.getCurrentTime) return;
@@ -127,15 +130,19 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
                 }, 100);
               }
             },
+            onError: () => {
+              if (!mounted) return;
+              setPlayerError(true);
+            },
           },
         });
         playerRef.current = player;
       } catch (error) {
         console.error('Error initializing YouTube player:', error);
+        setPlayerError(true);
       }
     };
 
-    // YouTube API 로드
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
@@ -172,11 +179,37 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const thumbnailUrl = scene.thumbnail || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
       <div className="relative w-full h-full max-w-md mx-auto" ref={containerRef}>
-        {/* YouTube Player */}
-        <div id="youtube-player" className="absolute inset-0 w-full h-full" />
+        {/* YouTube Player or Fallback */}
+        {playerError ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
+            <img
+              src={thumbnailUrl}
+              alt={scene.title}
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+            />
+            <div className="relative z-10 text-center p-6">
+              <div className="w-16 h-16 mx-auto mb-4 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <div className="w-0 h-0 border-l-[24px] border-l-white border-t-[14px] border-t-transparent border-b-[14px] border-b-transparent ml-1" />
+              </div>
+              <p className="text-white text-sm mb-2">This video cannot be embedded.</p>
+              <a
+                href={videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Watch on YouTube
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div id="youtube-player" className="absolute inset-0 w-full h-full" />
+        )}
 
         {/* Loop indicator */}
         <div className="absolute top-4 right-4 z-10">
@@ -188,13 +221,19 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
 
         {/* Overlay Instructions */}
         <div className="absolute top-20 left-4 right-4 z-10">
-          <div className="bg-blue-400/90 backdrop-blur-sm rounded-2xl p-4 space-y-2">
-            <p className="text-white text-sm font-medium">
-              Drop the phone from head to slightly under the chest
-            </p>
-            <p className="text-white text-sm font-medium">
-              Stop when your face is in the middle of the frame
-            </p>
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-5 h-5" />
+              <span className="text-gray-900 font-bold text-sm">Script - #{scene.id}: {scene.title}</span>
+            </div>
+            <div className="space-y-1.5">
+              {(scriptLines || [scene.description || 'Follow the reference video']).map((line, idx) => (
+                <p key={idx} className="text-gray-800 text-sm font-medium flex items-start gap-2">
+                  <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">{idx + 1}</span>
+                  {line}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -205,7 +244,7 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
               <span>{formatTime(startSeconds + currentTime)}</span>
               <span>{scene.startTime} ~ {scene.endTime}</span>
             </div>
-            
+
             <div className="w-full bg-gray-600/50 rounded-full h-2 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-100 ease-linear"
@@ -219,10 +258,10 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
         <div className="absolute bottom-16 left-4 right-4 z-10">
           <div className="bg-black/70 backdrop-blur-sm rounded-xl p-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-red-500 via-yellow-500 to-blue-500 rounded-lg" />
+              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
               <div>
                 <h3 className="text-white font-bold text-sm">#{scene.id}: {scene.title}</h3>
-                <p className="text-gray-300 text-xs">Introduction ... <span className="text-blue-400">+</span></p>
+                <p className="text-gray-300 text-xs">{scene.description || 'Introduction'} <span className="text-blue-400">+</span></p>
               </div>
             </div>
           </div>
@@ -234,7 +273,7 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
             onClick={onSwitchToShooting}
             className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold shadow-2xl hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105"
           >
-            Click the shooting button →
+            Click the shooting button
           </button>
         </div>
       </div>

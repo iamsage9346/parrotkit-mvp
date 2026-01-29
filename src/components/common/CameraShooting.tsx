@@ -126,14 +126,21 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
         </div>
       </div>
 
-      {/* Instructions */}
+      {/* Script & Instructions - always visible during filming */}
       <div className="absolute top-4 left-4 right-4 z-20">
-        <div className="bg-blue-400/90 backdrop-blur-sm rounded-2xl p-4 space-y-2">
-          {instructions.map((instruction, idx) => (
-            <p key={idx} className="text-white text-sm font-medium">
-              {instruction}
-            </p>
-          ))}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-5 h-5" />
+            <span className="text-gray-900 font-bold text-sm">Script - #{sceneId}: {sceneTitle}</span>
+          </div>
+          <div className="space-y-1.5">
+            {instructions.map((instruction, idx) => (
+              <p key={idx} className="text-gray-800 text-sm font-medium flex items-start gap-2">
+                <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">{idx + 1}</span>
+                {instruction}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -141,9 +148,9 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
       <div className="absolute bottom-32 left-4 right-4 z-20">
         <div className="bg-black/50 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-red-500 via-yellow-500 to-blue-500 rounded-lg" />
+            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
             <span className="text-white font-medium text-sm">
-              Introduction ... +
+              #{sceneId}: {sceneTitle}
             </span>
           </div>
         </div>

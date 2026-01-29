@@ -47,7 +47,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
           ☰
         </button>
         <div className="flex items-center gap-2">
-          <img src="/parrot-logo.svg" alt="Parrot Kit" className="w-6 h-6" />
+          <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
           <h1 className="text-xl font-bold text-gray-900">Parrot Kit</h1>
         </div>
         <div className="w-6" />
@@ -61,7 +61,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
       >
         <div className="p-6">
           <div className="flex items-center gap-2 mb-8">
-            <img src="/parrot-logo.svg" alt="Parrot Kit" className="w-8 h-8" />
+            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
             <h2 className="text-2xl font-bold text-gray-900">Parrot Kit</h2>
           </div>
 
@@ -113,6 +113,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
       <div className="flex-1 md:ml-0 mt-16 md:mt-0 p-4 md:p-8">
         <div className="max-w-6xl">{children}</div>
       </div>
+
     </div>
   );
 };
