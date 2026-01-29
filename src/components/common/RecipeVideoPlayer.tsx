@@ -53,6 +53,7 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playerError, setPlayerError] = useState(false);
+  const [scriptOpen, setScriptOpen] = useState(false);
   const videoId = extractVideoId(videoUrl);
   const startSeconds = timeToSeconds(scene.startTime);
   const endSeconds = timeToSeconds(scene.endTime);
@@ -219,33 +220,14 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
           </div>
         </div>
 
-        {/* Overlay Instructions */}
-        <div className="absolute top-20 left-4 right-4 z-10">
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-5 h-5" />
-              <span className="text-gray-900 font-bold text-sm">Script - #{scene.id}: {scene.title}</span>
-            </div>
-            <div className="space-y-1.5">
-              {(scriptLines || [scene.description || 'Follow the reference video']).map((line, idx) => (
-                <p key={idx} className="text-gray-800 text-sm font-medium flex items-start gap-2">
-                  <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">{idx + 1}</span>
-                  {line}
-                </p>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Progress Bar */}
-        <div className="absolute bottom-32 left-0 right-0 z-10 px-4">
-          <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4">
-            <div className="flex items-center justify-between text-white text-sm mb-2">
+        <div className="absolute top-4 left-4 right-20 z-10">
+          <div className="bg-black/70 backdrop-blur-sm rounded-xl px-3 py-2">
+            <div className="flex items-center justify-between text-white text-xs mb-1">
               <span>{formatTime(startSeconds + currentTime)}</span>
               <span>{scene.startTime} ~ {scene.endTime}</span>
             </div>
-
-            <div className="w-full bg-gray-600/50 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-gray-600/50 rounded-full h-1.5 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-100 ease-linear"
                 style={{ width: `${progress}%` }}
@@ -254,28 +236,63 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
           </div>
         </div>
 
-        {/* Scene Info */}
-        <div className="absolute bottom-16 left-4 right-4 z-10">
-          <div className="bg-black/70 backdrop-blur-sm rounded-xl p-3">
-            <div className="flex items-center gap-2">
-              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
-              <div>
-                <h3 className="text-white font-bold text-sm">#{scene.id}: {scene.title}</h3>
-                <p className="text-gray-300 text-xs">{scene.description || 'Introduction'} <span className="text-blue-400">+</span></p>
+        {/* Action Button */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
+          <button
+            onClick={() => setScriptOpen(true)}
+            className="px-4 py-2.5 bg-white/95 backdrop-blur-sm text-gray-900 rounded-xl font-semibold shadow-lg text-sm flex items-center gap-2"
+          >
+            <img src="/parrot-logo.png" alt="" className="w-5 h-5" />
+            대본 보기
+          </button>
+          <button
+            onClick={onSwitchToShooting}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold shadow-2xl hover:from-blue-600 hover:to-blue-700 transition-all"
+          >
+            촬영하기
+          </button>
+        </div>
+
+        {/* Script Bottom Sheet */}
+        {scriptOpen && (
+          <div className="absolute inset-0 z-20" onClick={() => setScriptOpen(false)}>
+            <div className="absolute inset-0 bg-black/40" />
+            <div
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxHeight: '70%' }}
+            >
+              {/* Drag Handle */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1.5 bg-gray-300 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
+                  <span className="font-bold text-gray-900 text-base">대본 - #{scene.id}: {scene.title}</span>
+                </div>
+                <button
+                  onClick={() => setScriptOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+
+              {/* Script Content */}
+              <div className="overflow-y-auto p-5 space-y-3" style={{ maxHeight: 'calc(70vh - 80px)' }}>
+                {(scriptLines || [scene.description || 'Follow the reference video']).map((line, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0 mt-0.5 font-bold">{idx + 1}</span>
+                    <p className="text-gray-800 text-sm font-medium leading-relaxed">{line}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Action Button */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
-          <button
-            onClick={onSwitchToShooting}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold shadow-2xl hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105"
-          >
-            Click the shooting button
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

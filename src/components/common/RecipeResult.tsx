@@ -11,6 +11,7 @@ interface RecipeScene {
   endTime: string;
   thumbnail: string;
   description: string;
+  script?: string[];
   progress: number;
 }
 
@@ -47,13 +48,43 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
   const [sheetHeight, setSheetHeight] = useState(50);
   const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
 
-  const getScriptForScene = (sceneId: number, description: string): string[] => {
-    if (sceneScripts[sceneId]) return sceneScripts[sceneId];
-    return [
-      description,
-      'Drop the phone from head to slightly under the chest',
-      'Stop when your face is in the middle of the frame',
-    ];
+  const defaultScripts: {[key: number]: string[]} = {
+    1: [
+      '이거 아직도 모르는 사람 많던데… 진짜 다들 알아야 됨',
+      '(카메라를 향해 자신감 있게 말하기)',
+      '표정은 약간 놀란 듯 + 호기심 유발',
+    ],
+    2: [
+      '안녕하세요, 오늘은 여러분이 꼭 알아야 할 꿀팁 하나 알려드릴게요',
+      '(자연스럽게 인사하면서 시작)',
+      '편안한 톤으로 친근하게 말하기',
+    ],
+    3: [
+      '처음에 저도 반신반의했는데, 직접 해보니까 진짜 효과 있더라고요',
+      '(경험을 공유하듯 솔직하게)',
+      '공감가는 표정 + 고개 끄덕이기',
+    ],
+    4: [
+      '자, 여기가 핵심이에요. 이 부분만 따라하시면 됩니다',
+      '(핵심 포인트를 강조하며 또박또박)',
+      '손가락으로 포인트 짚기 or 화면 가리키기',
+    ],
+    5: [
+      '이렇게 하면 끝! 생각보다 간단하죠?',
+      '(마무리하는 느낌으로 밝게)',
+      '만족스러운 표정으로 정리',
+    ],
+    6: [
+      '도움이 됐다면 좋아요, 팔로우 부탁드려요!',
+      '다음에 더 좋은 꿀팁으로 올게요~',
+      '(손 흔들며 마무리 인사)',
+    ],
+  };
+
+  const getScriptForScene = (scene: RecipeScene): string[] => {
+    if (sceneScripts[scene.id]) return sceneScripts[scene.id];
+    if (scene.script && scene.script.length > 0) return scene.script;
+    return defaultScripts[scene.id] || [scene.description];
   };
 
   const parseScriptLines = (text: string): string[] | null => {
@@ -86,7 +117,7 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
 
     setTimeout(() => chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }), 50);
 
-    const currentScript = selectedScene ? getScriptForScene(selectedScene.id, selectedScene.description) : [];
+    const currentScript = selectedScene ? getScriptForScene(selectedScene) : [];
     const payload = {
       messages: newHistory,
       scenes: scenes.map(s => ({ id: s.id, title: s.title, startTime: s.startTime, endTime: s.endTime, description: s.description })),
@@ -380,14 +411,14 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
             <RecipeVideoPlayer
               videoUrl={videoUrl}
               scene={selectedScene}
-              scriptLines={getScriptForScene(selectedScene.id, selectedScene.description)}
+              scriptLines={getScriptForScene(selectedScene)}
               onSwitchToShooting={() => setActiveTab('shooting')}
             />
           ) : (
             <CameraShooting
               sceneId={selectedScene.id}
               sceneTitle={selectedScene.title}
-              instructions={getScriptForScene(selectedScene.id, selectedScene.description)}
+              instructions={getScriptForScene(selectedScene)}
               onCapture={handleVideoCapture}
               onBack={handleCameraBack}
               embedded={true}

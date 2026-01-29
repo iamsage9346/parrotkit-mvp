@@ -10,11 +10,15 @@ interface RecipeScene {
   endTime: string;
   thumbnail: string;
   description: string;
+  script?: string[];
   progress: number;
 }
 
 export const Home: React.FC = () => {
   const [url, setUrl] = useState('');
+  const [niche, setNiche] = useState('');
+  const [goal, setGoal] = useState('');
+  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [recipeData, setRecipeData] = useState<{
@@ -56,7 +60,7 @@ export const Home: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, niche, goal, description }),
       });
 
       const data = await response.json();
@@ -155,28 +159,75 @@ export const Home: React.FC = () => {
         <div className="flex items-start gap-3 mb-4">
           <div className="text-2xl">🔗</div>
           <div>
-            <h3 className="font-bold text-gray-900 text-lg mb-1">Paste a URL to analyze</h3>
-            <p className="text-sm text-gray-600">Analyze viral videos from TikTok, Instagram, YouTube Shorts</p>
+            <h3 className="font-bold text-gray-900 text-lg mb-1">Reference Link</h3>
+            <p className="text-sm text-gray-600">Paste a viral video URL from TikTok, Instagram, YouTube Shorts</p>
           </div>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.tiktok.com/@username/video/..."
-              className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://www.tiktok.com/@username/video/..."
+          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+          disabled={loading}
+        />
+      </Card>
+
+      {/* Prompt Input Card */}
+      <Card className="mt-4">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="text-2xl">✍️</div>
+          <div>
+            <h3 className="font-bold text-gray-900 text-lg mb-1">Create Your Script</h3>
+            <p className="text-sm text-gray-600">Tell us about your content and we'll generate a custom script</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">What's your niche?</label>
+              <input
+                type="text"
+                value={niche}
+                onChange={(e) => setNiche(e.target.value)}
+                placeholder="e.g. 뷰티, 요리, 운동, IT 리뷰..."
+                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">What's your goal?</label>
+              <input
+                type="text"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="e.g. 팔로워 늘리기, 제품 홍보, 정보 전달..."
+                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Describe what you want to create!</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. 최근 유행하는 다이어트 방법을 소개하는 숏폼 영상을 만들고 싶어요. 재미있고 친근한 톤으로 시청자가 바로 따라할 수 있게..."
+              rows={3}
+              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
               disabled={loading}
             />
-            <button
-              type="submit"
-              disabled={loading || !url.trim()}
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              {loading ? '⏳ Analyzing...' : 'Analyze'}
-            </button>
           </div>
+
+          <button
+            type="submit"
+            disabled={loading || !url.trim()}
+            className="w-full px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            {loading ? '⏳ Analyzing...' : 'Analyze & Generate Script'}
+          </button>
         </form>
       </Card>
     </div>

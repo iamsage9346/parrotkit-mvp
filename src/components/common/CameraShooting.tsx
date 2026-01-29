@@ -8,7 +8,7 @@ interface CameraShootingProps {
   instructions: string[];
   onCapture: (videoBlob: Blob) => void;
   onBack: () => void;
-  embedded?: boolean; // 탭 내에서 사용될 때
+  embedded?: boolean;
 }
 
 export const CameraShooting: React.FC<CameraShootingProps> = ({
@@ -24,6 +24,7 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [scriptOpen, setScriptOpen] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -38,7 +39,7 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
         video: { facingMode: 'user' },
         audio: true,
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
@@ -126,39 +127,29 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
         </div>
       </div>
 
-      {/* Script & Instructions - always visible during filming */}
-      <div className="absolute top-4 left-4 right-4 z-20">
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-5 h-5" />
-            <span className="text-gray-900 font-bold text-sm">Script - #{sceneId}: {sceneTitle}</span>
-          </div>
-          <div className="space-y-1.5">
-            {instructions.map((instruction, idx) => (
-              <p key={idx} className="text-gray-800 text-sm font-medium flex items-start gap-2">
-                <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">{idx + 1}</span>
-                {instruction}
-              </p>
-            ))}
+      {/* Recording Indicator */}
+      {isRecording && (
+        <div className="absolute top-4 right-4 z-20">
+          <div className="flex items-center gap-2 bg-red-500 px-3 py-1.5 rounded-full">
+            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+            <span className="text-white text-sm font-bold">REC</span>
           </div>
         </div>
-      </div>
-
-      {/* Scene Info */}
-      <div className="absolute bottom-32 left-4 right-4 z-20">
-        <div className="bg-black/50 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
-            <span className="text-white font-medium text-sm">
-              #{sceneId}: {sceneTitle}
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Bottom Controls */}
       <div className="absolute bottom-8 left-0 right-0 z-20">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center gap-6">
+          {/* Script Button */}
+          <button
+            onClick={() => setScriptOpen(true)}
+            className="px-4 py-2.5 bg-white/95 backdrop-blur-sm text-gray-900 rounded-xl font-semibold shadow-lg text-sm flex items-center gap-2"
+          >
+            <img src="/parrot-logo.png" alt="" className="w-5 h-5" />
+            대본
+          </button>
+
+          {/* Record Button */}
           <button
             onClick={handleShootButton}
             className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all ${
@@ -172,15 +163,49 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
             )}
             {!isRecording && <div className="w-16 h-16 rounded-full bg-red-500" />}
           </button>
+
+          {/* Spacer for symmetry */}
+          <div className="w-[72px]" />
         </div>
       </div>
 
-      {/* Recording Indicator */}
-      {isRecording && (
-        <div className="absolute top-4 right-4 z-20">
-          <div className="flex items-center gap-2 bg-red-500 px-3 py-1.5 rounded-full">
-            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-            <span className="text-white text-sm font-bold">REC</span>
+      {/* Script Bottom Sheet */}
+      {scriptOpen && (
+        <div className="absolute inset-0 z-30" onClick={() => setScriptOpen(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxHeight: '60%' }}
+          >
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1.5 bg-gray-300 rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
+                <span className="font-bold text-gray-900 text-base">대본 - #{sceneId}: {sceneTitle}</span>
+              </div>
+              <button
+                onClick={() => setScriptOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+
+            {/* Script Content */}
+            <div className="overflow-y-auto p-5 space-y-3" style={{ maxHeight: 'calc(60vh - 80px)' }}>
+              {instructions.map((instruction, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0 mt-0.5 font-bold">{idx + 1}</span>
+                  <p className="text-gray-800 text-sm font-medium leading-relaxed">{instruction}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

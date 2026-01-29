@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 type Platform = 'youtube' | 'youtube-shorts' | 'instagram' | 'tiktok' | 'other';
 
@@ -49,13 +54,11 @@ async function fetchOgImage(url: string): Promise<string | null> {
 
     const html = await res.text();
 
-    // Try og:image first
     const ogMatch = html.match(/<meta\s+(?:property|name)=["']og:image["']\s+content=["']([^"']+)["']/i)
       || html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']og:image["']/i);
 
     if (ogMatch) return ogMatch[1];
 
-    // Try twitter:image as fallback
     const twitterMatch = html.match(/<meta\s+(?:property|name)=["']twitter:image["']\s+content=["']([^"']+)["']/i)
       || html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']twitter:image["']/i);
 
@@ -96,9 +99,103 @@ function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+const defaultSceneDescriptions = [
+  '이거 아직도 모르는 사람 많던데… 진짜 다들 알아야 됨',
+  '안녕하세요, 오늘은 여러분이 꼭 알아야 할 꿀팁 하나 알려드릴게요',
+  '처음에 저도 반신반의했는데, 직접 해보니까 진짜 효과 있더라고요',
+  '자, 여기가 핵심이에요. 이 부분만 따라하시면 됩니다',
+  '이렇게 하면 끝! 생각보다 간단하죠?',
+  '도움이 됐다면 좋아요, 팔로우 부탁드려요. 다음에 더 좋은 꿀팁으로 올게요!'
+];
+
+const defaultSceneScripts: {[key: number]: string[]} = {
+  1: [
+    '이거 아직도 모르는 사람 많던데… 진짜 다들 알아야 됨',
+    '(카메라를 향해 자신감 있게 말하기)',
+    '표정은 약간 놀란 듯 + 호기심 유발',
+  ],
+  2: [
+    '안녕하세요, 오늘은 여러분이 꼭 알아야 할 꿀팁 하나 알려드릴게요',
+    '(자연스럽게 인사하면서 시작)',
+    '편안한 톤으로 친근하게 말하기',
+  ],
+  3: [
+    '처음에 저도 반신반의했는데, 직접 해보니까 진짜 효과 있더라고요',
+    '(경험을 공유하듯 솔직하게)',
+    '공감가는 표정 + 고개 끄덕이기',
+  ],
+  4: [
+    '자, 여기가 핵심이에요. 이 부분만 따라하시면 됩니다',
+    '(핵심 포인트를 강조하며 또박또박)',
+    '손가락으로 포인트 짚기 or 화면 가리키기',
+  ],
+  5: [
+    '이렇게 하면 끝! 생각보다 간단하죠?',
+    '(마무리하는 느낌으로 밝게)',
+    '만족스러운 표정으로 정리',
+  ],
+  6: [
+    '도움이 됐다면 좋아요, 팔로우 부탁드려요!',
+    '다음에 더 좋은 꿀팁으로 올게요~',
+    '(손 흔들며 마무리 인사)',
+  ],
+};
+
+async function generateScriptsWithAI(niche: string, goal: string, description: string): Promise<{descriptions: string[], scripts: {[key: number]: string[]}} | null> {
+  try {
+    const prompt = `당신은 숏폼 영상 대본 작가입니다. 사용자의 정보를 바탕으로 6개 씬의 대본을 작성해주세요.
+
+사용자 정보:
+- 니치/분야: ${niche}
+- 목표: ${goal}
+- 설명: ${description}
+
+6개 씬 구조: Hook, Introduction, Build Up, Peak, Resolution, Outro
+
+다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "descriptions": ["씬1 한줄 요약", "씬2 한줄 요약", "씬3 한줄 요약", "씬4 한줄 요약", "씬5 한줄 요약", "씬6 한줄 요약"],
+  "scripts": {
+    "1": ["대사1", "연기 지시", "표정/동작"],
+    "2": ["대사1", "연기 지시", "표정/동작"],
+    "3": ["대사1", "연기 지시", "표정/동작"],
+    "4": ["대사1", "연기 지시", "표정/동작"],
+    "5": ["대사1", "연기 지시", "표정/동작"],
+    "6": ["대사1", "연기 지시", "표정/동작"]
+  }
+}
+
+각 씬의 대본은 3줄로 구성:
+1. 실제 말할 대사 (한국어, 자연스러운 구어체)
+2. 연기 지시 (괄호로 감싸서)
+3. 표정이나 동작 가이드`;
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return {
+      descriptions: parsed.descriptions,
+      scripts: Object.fromEntries(
+        Object.entries(parsed.scripts).map(([k, v]) => [parseInt(k), v])
+      ) as {[key: number]: string[]},
+    };
+  } catch (e) {
+    console.error('AI script generation failed:', e);
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { url } = await request.json();
+    const { url, niche, goal, description } = await request.json();
 
     if (!url) {
       return NextResponse.json(
@@ -109,31 +206,21 @@ export async function POST(request: NextRequest) {
 
     const platform = detectPlatform(url);
     const videoId = extractVideoId(url);
-
-    // Fetch og:image from the URL (works for Instagram, TikTok, YouTube, etc.)
     const ogImage = await fetchOgImage(url);
+
+    // Generate AI scripts if prompts are provided
+    const hasPrompts = niche?.trim() || goal?.trim() || description?.trim();
+    const aiResult = hasPrompts
+      ? await generateScriptsWithAI(niche || '', goal || '', description || '')
+      : null;
 
     const totalDuration = 30;
     const sceneDuration = 5;
     const sceneCount = Math.ceil(totalDuration / sceneDuration);
 
-    const sceneNames = [
-      'Hook',
-      'Introduction',
-      'Build Up',
-      'Peak',
-      'Resolution',
-      'Outro'
-    ];
+    const sceneNames = ['Hook', 'Introduction', 'Build Up', 'Peak', 'Resolution', 'Outro'];
 
-    const sceneDescriptions = [
-      'Grab attention with a strong opening hook',
-      'Set the scene and introduce the topic',
-      'Build tension and develop the story',
-      'Deliver the peak moment or key reveal',
-      'Wrap up the main content',
-      'End with a call-to-action or final message'
-    ];
+    const sceneDescriptions = aiResult?.descriptions || defaultSceneDescriptions;
 
     const scenes = [];
 
@@ -149,7 +236,6 @@ export async function POST(request: NextRequest) {
         const thumbIdx = thumbIndexes[i % thumbIndexes.length];
         thumbnail = `https://img.youtube.com/vi/${videoId || 'dQw4w9WgXcQ'}/${thumbIdx}.jpg`;
       } else if (ogImage) {
-        // Use the og:image from the original page (first frame / cover image)
         thumbnail = ogImage;
       } else {
         thumbnail = generatePlaceholderThumbnail(i, title);
@@ -162,6 +248,7 @@ export async function POST(request: NextRequest) {
         endTime: formatTime(endTime),
         thumbnail,
         description: sceneDescriptions[i] || `Scene ${i + 1}`,
+        script: aiResult?.scripts?.[i + 1] || defaultSceneScripts[i + 1] || [],
         progress: 0,
       });
     }
