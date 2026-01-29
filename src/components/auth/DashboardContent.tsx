@@ -160,7 +160,7 @@ export const Home: React.FC = () => {
           <div className="text-2xl">🔗</div>
           <div>
             <h3 className="font-bold text-gray-900 text-lg mb-1">Reference Link</h3>
-            <p className="text-sm text-gray-600">Paste a viral video URL from TikTok, Instagram, YouTube Shorts</p>
+            <p className="text-sm text-gray-800">Paste a viral video URL from TikTok, Instagram, YouTube Shorts</p>
           </div>
         </div>
         <input
@@ -168,7 +168,7 @@ export const Home: React.FC = () => {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://www.tiktok.com/@username/video/..."
-          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
           disabled={loading}
         />
       </Card>
@@ -179,44 +179,44 @@ export const Home: React.FC = () => {
           <div className="text-2xl">✍️</div>
           <div>
             <h3 className="font-bold text-gray-900 text-lg mb-1">Create Your Script</h3>
-            <p className="text-sm text-gray-600">Tell us about your content and we'll generate a custom script</p>
+            <p className="text-sm text-gray-800">Tell us about your content and we'll generate a custom script</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">What's your niche?</label>
+              <label className="block text-sm font-bold text-gray-900 mb-1.5">What's your niche?</label>
               <input
                 type="text"
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
                 placeholder="e.g. 뷰티, 요리, 운동, IT 리뷰..."
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                 disabled={loading}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">What's your goal?</label>
+              <label className="block text-sm font-bold text-gray-900 mb-1.5">What's your goal?</label>
               <input
                 type="text"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="e.g. 팔로워 늘리기, 제품 홍보, 정보 전달..."
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                 disabled={loading}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Describe what you want to create!</label>
+            <label className="block text-sm font-bold text-gray-900 mb-1.5">Describe what you want to create!</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. 최근 유행하는 다이어트 방법을 소개하는 숏폼 영상을 만들고 싶어요. 재미있고 친근한 톤으로 시청자가 바로 따라할 수 있게..."
               rows={3}
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+              className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
               disabled={loading}
             />
           </div>
