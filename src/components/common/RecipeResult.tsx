@@ -545,10 +545,6 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
           >
             <span className="text-xl">←</span> Back
           </button>
-          <div className="flex items-center gap-2">
-            <img src="/parrot-logo.png" alt="Parrot Kit" className="w-8 h-8" />
-            <h1 className="text-lg font-bold">Parrot Kit</h1>
-          </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             {Object.keys(capturedVideos).length > 0 && (
               <span>{Object.keys(capturedVideos).length}/{scenes.length} captured</span>
