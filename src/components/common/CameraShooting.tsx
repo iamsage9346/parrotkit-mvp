@@ -121,8 +121,8 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
         </div>
 
         <div className="relative">
-          <div className="w-48 h-48 rounded-full border-4 border-yellow-400/70 flex items-center justify-center">
-            <div className="text-yellow-400 text-6xl">😊</div>
+          <div className="w-48 h-48 rounded-full border-4 border-white/50 flex items-center justify-center">
+            <div className="w-36 h-44 rounded-full border-2 border-white/30" />
           </div>
         </div>
       </div>

@@ -373,10 +373,7 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
             >
               ← Back
             </button>
-            <div className="flex items-center gap-2">
-              <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
-              <span className="text-sm font-medium">#{selectedScene.id}: {selectedScene.title}</span>
-            </div>
+            <span className="text-sm font-medium">#{selectedScene.id}: {selectedScene.title}</span>
             <div className="text-sm text-gray-400">slow mode</div>
           </div>
         </div>
