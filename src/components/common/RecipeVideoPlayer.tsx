@@ -236,20 +236,14 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
+        {/* View Script Button */}
+        <div className="absolute bottom-4 left-4 z-10">
           <button
             onClick={() => setScriptOpen(true)}
             className="px-4 py-2.5 bg-white/95 backdrop-blur-sm text-gray-900 rounded-xl font-semibold shadow-lg text-sm flex items-center gap-2"
           >
             <img src="/parrot-logo.png" alt="" className="w-5 h-5" />
-            대본 보기
-          </button>
-          <button
-            onClick={onSwitchToShooting}
-            className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold shadow-2xl hover:from-blue-600 hover:to-blue-700 transition-all"
-          >
-            촬영하기
+            View Script
           </button>
         </div>
 
