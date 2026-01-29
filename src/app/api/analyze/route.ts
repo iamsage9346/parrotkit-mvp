@@ -100,75 +100,75 @@ function formatTime(seconds: number): string {
 }
 
 const defaultSceneDescriptions = [
-  '이거 아직도 모르는 사람 많던데… 진짜 다들 알아야 됨',
-  '안녕하세요, 오늘은 여러분이 꼭 알아야 할 꿀팁 하나 알려드릴게요',
-  '처음에 저도 반신반의했는데, 직접 해보니까 진짜 효과 있더라고요',
-  '자, 여기가 핵심이에요. 이 부분만 따라하시면 됩니다',
-  '이렇게 하면 끝! 생각보다 간단하죠?',
-  '도움이 됐다면 좋아요, 팔로우 부탁드려요. 다음에 더 좋은 꿀팁으로 올게요!'
+  'Most people still don\'t know this... you NEED to hear this',
+  'Hey everyone, today I\'m sharing a tip you absolutely need to know',
+  'I was skeptical at first, but after trying it myself, it actually works',
+  'Okay, here\'s the key part. Just follow this and you\'re set',
+  'And that\'s it! Easier than you thought, right?',
+  'If this helped, hit like and follow! More great tips coming soon!'
 ];
 
 const defaultSceneScripts: {[key: number]: string[]} = {
   1: [
-    '이거 아직도 모르는 사람 많던데… 진짜 다들 알아야 됨',
-    '(카메라를 향해 자신감 있게 말하기)',
-    '표정은 약간 놀란 듯 + 호기심 유발',
+    'Most people still don\'t know this... you NEED to hear this',
+    '(Look at the camera with confidence)',
+    'Slightly surprised expression + spark curiosity',
   ],
   2: [
-    '안녕하세요, 오늘은 여러분이 꼭 알아야 할 꿀팁 하나 알려드릴게요',
-    '(자연스럽게 인사하면서 시작)',
-    '편안한 톤으로 친근하게 말하기',
+    'Hey everyone, today I\'m sharing a tip you absolutely need to know',
+    '(Start with a natural greeting)',
+    'Relaxed, friendly tone',
   ],
   3: [
-    '처음에 저도 반신반의했는데, 직접 해보니까 진짜 효과 있더라고요',
-    '(경험을 공유하듯 솔직하게)',
-    '공감가는 표정 + 고개 끄덕이기',
+    'I was skeptical at first, but after trying it myself, it actually works',
+    '(Share your experience honestly)',
+    'Relatable expression + nodding',
   ],
   4: [
-    '자, 여기가 핵심이에요. 이 부분만 따라하시면 됩니다',
-    '(핵심 포인트를 강조하며 또박또박)',
-    '손가락으로 포인트 짚기 or 화면 가리키기',
+    'Okay, here\'s the key part. Just follow this and you\'re set',
+    '(Emphasize the main point clearly)',
+    'Point with finger or gesture at screen',
   ],
   5: [
-    '이렇게 하면 끝! 생각보다 간단하죠?',
-    '(마무리하는 느낌으로 밝게)',
-    '만족스러운 표정으로 정리',
+    'And that\'s it! Easier than you thought, right?',
+    '(Wrap up with an upbeat tone)',
+    'Satisfied expression, nod and smile',
   ],
   6: [
-    '도움이 됐다면 좋아요, 팔로우 부탁드려요!',
-    '다음에 더 좋은 꿀팁으로 올게요~',
-    '(손 흔들며 마무리 인사)',
+    'If this helped, hit like and follow!',
+    'More great tips coming soon!',
+    '(Wave and give a closing smile)',
   ],
 };
 
 async function generateScriptsWithAI(niche: string, goal: string, description: string): Promise<{descriptions: string[], scripts: {[key: number]: string[]}} | null> {
   try {
-    const prompt = `당신은 숏폼 영상 대본 작가입니다. 사용자의 정보를 바탕으로 6개 씬의 대본을 작성해주세요.
+    const prompt = `You are a short-form video script writer. Based on the user's info, write scripts for 6 scenes.
 
-사용자 정보:
-- 니치/분야: ${niche}
-- 목표: ${goal}
-- 설명: ${description}
+User Info:
+- Niche: ${niche}
+- Goal: ${goal}
+- Description: ${description}
 
-6개 씬 구조: Hook, Introduction, Build Up, Peak, Resolution, Outro
+6 scene structure: Hook, Introduction, Build Up, Peak, Resolution, Outro
 
-다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+Respond ONLY in the following JSON format (no other text):
 {
-  "descriptions": ["씬1 한줄 요약", "씬2 한줄 요약", "씬3 한줄 요약", "씬4 한줄 요약", "씬5 한줄 요약", "씬6 한줄 요약"],
+  "descriptions": ["scene1 one-line summary", "scene2 one-line summary", "scene3 one-line summary", "scene4 one-line summary", "scene5 one-line summary", "scene6 one-line summary"],
   "scripts": {
-    "1": ["대사1", "연기 지시", "표정/동작"],
-    "2": ["대사1", "연기 지시", "표정/동작"],
-    "3": ["대사1", "연기 지시", "표정/동작"],
-    "4": ["대사1", "연기 지시", "표정/동작"],
-    "5": ["대사1", "연기 지시", "표정/동작"],
-    "6": ["대사1", "연기 지시", "표정/동작"]
+    "1": ["dialogue line", "acting direction", "expression/gesture"],
+    "2": ["dialogue line", "acting direction", "expression/gesture"],
+    "3": ["dialogue line", "acting direction", "expression/gesture"],
+    "4": ["dialogue line", "acting direction", "expression/gesture"],
+    "5": ["dialogue line", "acting direction", "expression/gesture"],
+    "6": ["dialogue line", "acting direction", "expression/gesture"]
   }
 }
 
-각 씬의 대본은 3줄로 구성:
-1. 실제 말할 대사 (한국어, 자연스러운 구어체)
-2. 연기 지시 (괄호로 감싸서)
-3. 표정이나 동작 가이드`;
+Each scene script has 3 lines:
+1. The actual dialogue to say (natural, conversational English)
+2. Acting direction (in parentheses)
+3. Expression or gesture guide`;
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',

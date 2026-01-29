@@ -50,34 +50,34 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
 
   const defaultScripts: {[key: number]: string[]} = {
     1: [
-      '이거 아직도 모르는 사람 많던데… 진짜 다들 알아야 됨',
-      '(카메라를 향해 자신감 있게 말하기)',
-      '표정은 약간 놀란 듯 + 호기심 유발',
+      'Most people still don\'t know this... you NEED to hear this',
+      '(Look at the camera with confidence)',
+      'Slightly surprised expression + spark curiosity',
     ],
     2: [
-      '안녕하세요, 오늘은 여러분이 꼭 알아야 할 꿀팁 하나 알려드릴게요',
-      '(자연스럽게 인사하면서 시작)',
-      '편안한 톤으로 친근하게 말하기',
+      'Hey everyone, today I\'m sharing a tip you absolutely need to know',
+      '(Start with a natural greeting)',
+      'Relaxed, friendly tone',
     ],
     3: [
-      '처음에 저도 반신반의했는데, 직접 해보니까 진짜 효과 있더라고요',
-      '(경험을 공유하듯 솔직하게)',
-      '공감가는 표정 + 고개 끄덕이기',
+      'I was skeptical at first, but after trying it myself, it actually works',
+      '(Share your experience honestly)',
+      'Relatable expression + nodding',
     ],
     4: [
-      '자, 여기가 핵심이에요. 이 부분만 따라하시면 됩니다',
-      '(핵심 포인트를 강조하며 또박또박)',
-      '손가락으로 포인트 짚기 or 화면 가리키기',
+      'Okay, here\'s the key part. Just follow this and you\'re set',
+      '(Emphasize the main point clearly)',
+      'Point with finger or gesture at screen',
     ],
     5: [
-      '이렇게 하면 끝! 생각보다 간단하죠?',
-      '(마무리하는 느낌으로 밝게)',
-      '만족스러운 표정으로 정리',
+      'And that\'s it! Easier than you thought, right?',
+      '(Wrap up with an upbeat tone)',
+      'Satisfied expression, nod and smile',
     ],
     6: [
-      '도움이 됐다면 좋아요, 팔로우 부탁드려요!',
-      '다음에 더 좋은 꿀팁으로 올게요~',
-      '(손 흔들며 마무리 인사)',
+      'If this helped, hit like and follow!',
+      'More great tips coming soon!',
+      '(Wave and give a closing smile)',
     ],
   };
 

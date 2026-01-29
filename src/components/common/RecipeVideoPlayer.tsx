@@ -265,7 +265,7 @@ export const RecipeVideoPlayer: React.FC<RecipeVideoPlayerProps> = ({
               <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                   <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
-                  <span className="font-bold text-gray-900 text-base">대본 - #{scene.id}: {scene.title}</span>
+                  <span className="font-bold text-gray-900 text-base">Script - #{scene.id}: {scene.title}</span>
                 </div>
                 <button
                   onClick={() => setScriptOpen(false)}

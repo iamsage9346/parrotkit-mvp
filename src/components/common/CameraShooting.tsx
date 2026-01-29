@@ -146,7 +146,7 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
             className="px-4 py-2.5 bg-white/95 backdrop-blur-sm text-gray-900 rounded-xl font-semibold shadow-lg text-sm flex items-center gap-2"
           >
             <img src="/parrot-logo.png" alt="" className="w-5 h-5" />
-            대본
+            Script
           </button>
 
           {/* Record Button */}
@@ -187,7 +187,7 @@ export const CameraShooting: React.FC<CameraShootingProps> = ({
             <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <img src="/parrot-logo.png" alt="Parrot Kit" className="w-6 h-6" />
-                <span className="font-bold text-gray-900 text-base">대본 - #{sceneId}: {sceneTitle}</span>
+                <span className="font-bold text-gray-900 text-base">Script - #{sceneId}: {sceneTitle}</span>
               </div>
               <button
                 onClick={() => setScriptOpen(false)}
