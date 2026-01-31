@@ -598,6 +598,13 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
                       src={scene.thumbnail}
                       alt={scene.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        // Fallback to hqdefault if higher res not available
+                        if (img.src.includes('maxresdefault') || img.src.includes('sddefault')) {
+                          img.src = img.src.replace(/\/[^/]+\.jpg$/, '/hqdefault.jpg');
+                        }
+                      }}
                     />
                     {isCaptured && (
                       <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">

@@ -232,9 +232,11 @@ export async function POST(request: NextRequest) {
       let thumbnail: string;
 
       if (platform === 'youtube' || platform === 'youtube-shorts') {
-        const thumbIndexes = [0, 1, 2, 3, 1, 2];
-        const thumbIdx = thumbIndexes[i % thumbIndexes.length];
-        thumbnail = `https://img.youtube.com/vi/${videoId || 'dQw4w9WgXcQ'}/${thumbIdx}.jpg`;
+        const vid = videoId || 'dQw4w9WgXcQ';
+        // Use highest quality thumbnails available
+        const thumbNames = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'hqdefault', 'sddefault'];
+        const thumbName = thumbNames[i % thumbNames.length];
+        thumbnail = `https://img.youtube.com/vi/${vid}/${thumbName}.jpg`;
       } else if (ogImage) {
         thumbnail = ogImage;
       } else {
