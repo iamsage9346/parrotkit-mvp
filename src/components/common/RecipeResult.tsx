@@ -578,7 +578,7 @@ export const RecipeResult: React.FC<RecipeResultProps> = ({
           </div>
 
           {/* Scenes Grid - compact, fits in one screen */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 flex-1 auto-rows-fr">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 flex-1 auto-rows-fr">
             {scenes.map((scene) => {
               const isCaptured = capturedScenes[scene.id];
 
